@@ -1,0 +1,15 @@
+# Maven
+target/
+
+# IDE files
+.idea/
+.vscode/
+
+# macOS
+.DS_Store
+
+# Java
+*.class
+
+# Environment / secrets
+.env
