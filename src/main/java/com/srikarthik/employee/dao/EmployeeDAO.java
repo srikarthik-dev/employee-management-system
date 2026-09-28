@@ -123,6 +123,40 @@ public class EmployeeDAO {
         }
     }
 
+    public List<Employee> search(String keyword) throws SQLException {
+        String sql = """
+                SELECT * FROM employees
+                WHERE employee_code LIKE ?
+                   OR first_name LIKE ?
+                   OR last_name LIKE ?
+                   OR email LIKE ?
+                   OR department LIKE ?
+                ORDER BY id
+                """;
+
+        List<Employee> employees = new ArrayList<>();
+
+        String searchKeyword = "%" + keyword + "%";
+
+        try (Connection connection = DatabaseConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setString(1, searchKeyword);
+            statement.setString(2, searchKeyword);
+            statement.setString(3, searchKeyword);
+            statement.setString(4, searchKeyword);
+            statement.setString(5, searchKeyword);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                while (resultSet.next()) {
+                    employees.add(mapRow(resultSet));
+                }
+            }
+        }
+
+        return employees;
+    }
+
     private Employee mapRow(ResultSet resultSet) throws SQLException {
         Employee employee = new Employee();
 

@@ -11,14 +11,26 @@ import java.util.Scanner;
 
 public class Main {
 
+    // -------------------------------------------------------------------------
+    // Constants
+    // -------------------------------------------------------------------------
+
+    private static final String DIVIDER  = "----------------------------------------";
+    private static final String DIVIDER_THICK = "========================================";
+
     private static final Scanner scanner = new Scanner(System.in);
     private static final EmployeeService employeeService = new EmployeeService();
 
+    // -------------------------------------------------------------------------
+    // Entry point
+    // -------------------------------------------------------------------------
+
     public static void main(String[] args) {
 
-        System.out.println("=================================");
-        System.out.println("    EMPLOYEE MANAGEMENT SYSTEM");
-        System.out.println("=================================");
+        System.out.println();
+        System.out.println(DIVIDER_THICK);
+        System.out.println("       EMPLOYEE MANAGEMENT SYSTEM");
+        System.out.println(DIVIDER_THICK);
 
         boolean running = true;
 
@@ -32,22 +44,30 @@ public class Main {
                     case "1" -> addEmployee();
                     case "2" -> viewEmployee();
                     case "3" -> viewAllEmployees();
-                    case "4" -> updateEmployee();
-                    case "5" -> deleteEmployee();
-                    case "6" -> {
+                    case "4" -> searchEmployees();
+                    case "5" -> updateEmployee();
+                    case "6" -> deleteEmployee();
+                    case "7" -> {
                         running = false;
-                        System.out.println("\nThank you for using Employee Management System.");
+                        printExit();
                     }
-                    default -> System.out.println("\nInvalid choice. Please select 1-6.");
+                    default -> System.out.println("\n  Invalid choice. Please select 1-7.");
                 }
             } catch (SQLException e) {
-                System.out.println("\nDatabase error: " + e.getMessage());
+                // MySQL error code 1062 = duplicate entry (UNIQUE constraint)
+                if ("23000".equals(e.getSQLState()) || e.getErrorCode() == 1062) {
+                    System.out.println(
+                            "\n  Employee code or email already exists.");
+                } else {
+                    System.out.println("\n  Database error: " + e.getMessage());
+                }
             } catch (IllegalArgumentException e) {
-                System.out.println("\nValidation error: " + e.getMessage());
+                System.out.println("\n  Validation error: " + e.getMessage());
             }
 
             if (running) {
-                System.out.println("\nPress Enter to continue...");
+                System.out.println();
+                System.out.print("  Press Enter to continue...");
                 scanner.nextLine();
             }
         }
@@ -55,32 +75,41 @@ public class Main {
         scanner.close();
     }
 
+    // -------------------------------------------------------------------------
+    // Menu
+    // -------------------------------------------------------------------------
+
     private static void displayMenu() {
-        System.out.println("\n---------------------------------");
-        System.out.println("1. Add Employee");
-        System.out.println("2. View Employee");
-        System.out.println("3. View All Employees");
-        System.out.println("4. Update Employee");
-        System.out.println("5. Delete Employee");
-        System.out.println("6. Exit");
-        System.out.println("---------------------------------");
-        System.out.print("Enter choice: ");
+        System.out.println();
+        System.out.println(DIVIDER_THICK);
+        System.out.println("  1.  Add Employee");
+        System.out.println("  2.  View Employee");
+        System.out.println("  3.  View All Employees");
+        System.out.println("  4.  Search Employee");
+        System.out.println("  5.  Update Employee");
+        System.out.println("  6.  Delete Employee");
+        System.out.println("  7.  Exit");
+        System.out.println(DIVIDER_THICK);
+        System.out.print("  Enter choice: ");
     }
+
+    // -------------------------------------------------------------------------
+    // Add Employee
+    // -------------------------------------------------------------------------
 
     private static void addEmployee() throws SQLException {
 
-        System.out.println("\n--- Add Employee ---");
+        printSectionHeader("Add Employee");
 
-        String employeeCode = readRequired("Employee Code: ");
-        String firstName = readRequired("First Name: ");
-        String lastName = readRequired("Last Name: ");
-        String email = readRequired("Email: ");
-        String phone = readOptional("Phone: ");
-        String department = readRequired("Department: ");
-        String designation = readRequired("Designation: ");
-
-        BigDecimal salary = readSalary();
-        LocalDate hireDate = readDate("Hire Date (YYYY-MM-DD): ");
+        String employeeCode = readRequired("  Employee Code        : ");
+        String firstName    = readRequired("  First Name           : ");
+        String lastName     = readRequired("  Last Name            : ");
+        String email        = readRequired("  Email                : ");
+        String phone        = readOptional("  Phone (optional)     : ");
+        String department   = readRequired("  Department           : ");
+        String designation  = readRequired("  Designation          : ");
+        BigDecimal salary   = readSalary();
+        LocalDate hireDate  = readDate("  Hire Date (YYYY-MM-DD): ");
 
         Employee employee = new Employee(
                 employeeCode,
@@ -96,128 +125,212 @@ public class Main {
 
         Employee created = employeeService.addEmployee(employee);
 
-        System.out.println("\nEmployee added successfully!");
-        System.out.println("Generated ID: " + created.getId());
+        System.out.println();
+        System.out.println(DIVIDER);
+        System.out.println("  Employee added successfully!");
+        System.out.println("  Generated ID : " + created.getId());
+        System.out.println(DIVIDER);
     }
+
+    // -------------------------------------------------------------------------
+    // View Employee
+    // -------------------------------------------------------------------------
 
     private static void viewEmployee() throws SQLException {
 
-        System.out.println("\n--- View Employee ---");
+        printSectionHeader("View Employee");
 
-        int id = readId("Employee ID: ");
+        int id = readId("  Employee ID: ");
 
         Employee employee = employeeService.getEmployee(id);
 
         if (employee == null) {
-            System.out.println("\nEmployee not found.");
+            System.out.println("\n  Employee not found.");
             return;
         }
 
         printEmployee(employee);
     }
 
+    // -------------------------------------------------------------------------
+    // View All Employees
+    // -------------------------------------------------------------------------
+
     private static void viewAllEmployees() throws SQLException {
 
-        System.out.println("\n--- All Employees ---");
+        printSectionHeader("All Employees");
 
         List<Employee> employees = employeeService.getAllEmployees();
 
         if (employees.isEmpty()) {
-            System.out.println("No employees found.");
+            System.out.println("\n  No employees found.");
             return;
         }
 
         for (Employee employee : employees) {
             printEmployee(employee);
-            System.out.println("---------------------------------");
         }
 
-        System.out.println("Total employees: " + employees.size());
+        System.out.println();
+        System.out.println("  Total employees: " + employees.size());
+        System.out.println(DIVIDER);
     }
+
+    // -------------------------------------------------------------------------
+    // Search Employees
+    // -------------------------------------------------------------------------
+
+    private static void searchEmployees() throws SQLException {
+
+        printSectionHeader("Search Employees");
+
+        String keyword = readRequired("  Search keyword: ");
+
+        List<Employee> employees = employeeService.searchEmployees(keyword);
+
+        if (employees.isEmpty()) {
+            System.out.println("\n  No employees found for: \"" + keyword + "\"");
+            return;
+        }
+
+        System.out.println();
+        System.out.println("  Results for: \"" + keyword + "\"");
+
+        for (Employee employee : employees) {
+            printEmployee(employee);
+        }
+
+        System.out.println();
+        System.out.println("  Total results: " + employees.size());
+        System.out.println(DIVIDER);
+    }
+
+    // -------------------------------------------------------------------------
+    // Update Employee
+    // -------------------------------------------------------------------------
 
     private static void updateEmployee() throws SQLException {
 
-        System.out.println("\n--- Update Employee ---");
+        printSectionHeader("Update Employee");
 
-        int id = readId("Employee ID: ");
+        int id = readId("  Employee ID: ");
 
         Employee employee = employeeService.getEmployee(id);
 
         if (employee == null) {
-            System.out.println("\nEmployee not found.");
+            System.out.println("\n  Employee not found.");
             return;
         }
 
-        System.out.println("\nCurrent employee:");
+        System.out.println("\n  Current record:");
         printEmployee(employee);
 
-        System.out.println("\nEnter new values:");
+        System.out.println();
+        System.out.println("  Enter new values:");
+        System.out.println(DIVIDER);
 
-        employee.setEmployeeCode(readRequired("Employee Code: "));
-        employee.setFirstName(readRequired("First Name: "));
-        employee.setLastName(readRequired("Last Name: "));
-        employee.setEmail(readRequired("Email: "));
-        employee.setPhone(readOptional("Phone: "));
-        employee.setDepartment(readRequired("Department: "));
-        employee.setDesignation(readRequired("Designation: "));
+        employee.setEmployeeCode(readRequired("  Employee Code        : "));
+        employee.setFirstName(readRequired("  First Name           : "));
+        employee.setLastName(readRequired("  Last Name            : "));
+        employee.setEmail(readRequired("  Email                : "));
+        employee.setPhone(readOptional("  Phone (optional)     : "));
+        employee.setDepartment(readRequired("  Department           : "));
+        employee.setDesignation(readRequired("  Designation          : "));
         employee.setSalary(readSalary());
-        employee.setHireDate(readDate("Hire Date (YYYY-MM-DD): "));
+        employee.setHireDate(readDate("  Hire Date (YYYY-MM-DD): "));
 
         boolean updated = employeeService.updateEmployee(employee);
 
+        System.out.println();
+        System.out.println(DIVIDER);
         if (updated) {
-            System.out.println("\nEmployee updated successfully!");
+            System.out.println("  Employee updated successfully!");
         } else {
-            System.out.println("\nEmployee could not be updated.");
+            System.out.println("  Employee could not be updated.");
         }
+        System.out.println(DIVIDER);
     }
+
+    // -------------------------------------------------------------------------
+    // Delete Employee
+    // -------------------------------------------------------------------------
 
     private static void deleteEmployee() throws SQLException {
 
-        System.out.println("\n--- Delete Employee ---");
+        printSectionHeader("Delete Employee");
 
-        int id = readId("Employee ID: ");
+        int id = readId("  Employee ID: ");
 
         Employee employee = employeeService.getEmployee(id);
 
         if (employee == null) {
-            System.out.println("\nEmployee not found.");
+            System.out.println("\n  Employee not found.");
             return;
         }
 
-        System.out.println("\nEmployee to delete:");
+        System.out.println("\n  Employee to delete:");
         printEmployee(employee);
 
-        System.out.print("\nAre you sure? (yes/no): ");
+        System.out.println();
+        System.out.print("  Are you sure you want to delete this record? (yes/no): ");
         String confirmation = scanner.nextLine().trim();
 
         if (!confirmation.equalsIgnoreCase("yes")) {
-            System.out.println("Delete cancelled.");
+            System.out.println("\n  Delete cancelled.");
             return;
         }
 
         boolean deleted = employeeService.deleteEmployee(id);
 
+        System.out.println();
+        System.out.println(DIVIDER);
         if (deleted) {
-            System.out.println("\nEmployee deleted successfully!");
+            System.out.println("  Employee deleted successfully!");
         } else {
-            System.out.println("\nEmployee could not be deleted.");
+            System.out.println("  Employee could not be deleted.");
         }
+        System.out.println(DIVIDER);
+    }
+
+    // -------------------------------------------------------------------------
+    // Display helpers
+    // -------------------------------------------------------------------------
+
+    private static void printSectionHeader(String title) {
+        System.out.println();
+        System.out.println(DIVIDER);
+        System.out.println("  " + title);
+        System.out.println(DIVIDER);
     }
 
     private static void printEmployee(Employee employee) {
-
-        System.out.println("\nEmployee ID   : " + employee.getId());
-        System.out.println("Employee Code : " + employee.getEmployeeCode());
-        System.out.println("Name          : " +
+        System.out.println(DIVIDER);
+        System.out.println("  Employee ID   : " + employee.getId());
+        System.out.println("  Employee Code : " + employee.getEmployeeCode());
+        System.out.println("  Name          : " +
                 employee.getFirstName() + " " + employee.getLastName());
-        System.out.println("Email         : " + employee.getEmail());
-        System.out.println("Phone         : " + employee.getPhone());
-        System.out.println("Department    : " + employee.getDepartment());
-        System.out.println("Designation   : " + employee.getDesignation());
-        System.out.println("Salary        : " + employee.getSalary());
-        System.out.println("Hire Date     : " + employee.getHireDate());
+        System.out.println("  Email         : " + employee.getEmail());
+        System.out.println("  Phone         : " +
+                (employee.getPhone() != null ? employee.getPhone() : "-"));
+        System.out.println("  Department    : " + employee.getDepartment());
+        System.out.println("  Designation   : " + employee.getDesignation());
+        System.out.println("  Salary        : " + employee.getSalary());
+        System.out.println("  Hire Date     : " + employee.getHireDate());
+        System.out.println(DIVIDER);
     }
+
+    private static void printExit() {
+        System.out.println();
+        System.out.println(DIVIDER_THICK);
+        System.out.println("  Thank you for using Employee Management System.");
+        System.out.println("  Goodbye!");
+        System.out.println(DIVIDER_THICK);
+        System.out.println();
+    }
+
+    // -------------------------------------------------------------------------
+    // Input helpers
+    // -------------------------------------------------------------------------
 
     private static String readRequired(String prompt) {
 
@@ -230,7 +343,7 @@ public class Main {
                 return value;
             }
 
-            System.out.println("This field is required.");
+            System.out.println("  This field is required.");
         }
     }
 
@@ -256,10 +369,10 @@ public class Main {
                     return id;
                 }
 
-                System.out.println("ID must be greater than zero.");
+                System.out.println("  ID must be greater than zero.");
 
             } catch (NumberFormatException e) {
-                System.out.println("Please enter a valid number.");
+                System.out.println("  Please enter a valid number.");
             }
         }
     }
@@ -268,7 +381,7 @@ public class Main {
 
         while (true) {
 
-            System.out.print("Salary: ");
+            System.out.print("  Salary                : ");
 
             try {
                 BigDecimal salary =
@@ -278,10 +391,10 @@ public class Main {
                     return salary;
                 }
 
-                System.out.println("Salary cannot be negative.");
+                System.out.println("  Salary cannot be negative.");
 
             } catch (NumberFormatException e) {
-                System.out.println("Please enter a valid salary.");
+                System.out.println("  Please enter a valid salary.");
             }
         }
     }
@@ -297,8 +410,7 @@ public class Main {
 
             } catch (Exception e) {
                 System.out.println(
-                        "Invalid date. Use YYYY-MM-DD."
-                );
+                        "  Invalid date. Use YYYY-MM-DD format.");
             }
         }
     }
