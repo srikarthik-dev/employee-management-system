@@ -13,3 +13,4 @@ target/
 
 # Environment / secrets
 .env
+src/main/resources/application.properties
