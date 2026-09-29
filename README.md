@@ -1,428 +1,229 @@
 # Employee Management System
 
-A command-line Java application for managing employee records using MySQL and JDBC.
-Built with a clean DAO + Service + Model architecture, this project demonstrates
-core Java skills, relational database integration, layered application design,
-and professional software engineering practices.
+A robust command-line Java application for managing employee records. Built with a clean layered architecture, this project demonstrates core Java skills, relational database integration, and professional software engineering practices, including automated testing and Dockerized deployment.
 
 ---
 
-## Features
+## 1. Project Overview
 
-| Feature | Description |
-|---|---|
-| **Add Employee** | Create a new employee record with full details |
-| **View Employee** | Look up a single employee by ID |
-| **View All Employees** | List every employee in the database |
-| **Search Employee** | Partial-match search across code, name, email, and department |
-| **Update Employee** | Modify any field of an existing employee record |
-| **Delete Employee** | Remove an employee record with a confirmation prompt |
-| **Input Validation** | Required fields, length limits, email format, salary range, hire date |
-| **Duplicate Handling** | Friendly error when employee code or email already exists |
-| **MySQL Persistence** | All data stored in a MySQL database via JDBC |
-| **JUnit Testing** | Automated tests covering DB connectivity, CRUD, search, and validation |
+- **Type:** CLI-based Application
+- **Language:** Java 17
+- **Build Tool:** Maven
+- **Database:** MySQL
+- **Database Access:** JDBC
+- **Architecture:** DAO + Service layered architecture
 
 ---
 
-## Technologies Used
+## 2. Key Features
 
-| Technology | Version / Detail |
-|---|---|
-| Java | 17 |
-| Maven | Build tool and dependency management |
-| MySQL | Relational database |
-| MySQL Connector/J | 9.4.0 — JDBC driver |
-| JUnit Jupiter | 5.13.4 — unit and integration tests |
-| Git & GitHub | Version control |
+- **Add employee:** Create new employee records with full details.
+- **View employee:** Look up a single employee by their ID.
+- **View all employees:** List every employee in the database.
+- **Search:** Partial-match search across code, name, email, and department.
+- **Update:** Modify any field of an existing employee record.
+- **Delete:** Remove an employee record with a confirmation prompt.
+- **Validation:** Strict input validation (required fields, length limits, email format, salary range, hire date).
+- **Duplicate handling:** Friendly error messages when an employee code or email already exists.
+- **MySQL persistence:** All data is securely stored in a MySQL database.
+- **Automated JUnit testing:** Comprehensive test suite covering validation, CRUD, and database connectivity.
+- **Dockerized deployment:** Fully containerized setup for easy execution without local dependencies.
 
 ---
 
-## Project Architecture
+## 3. Architecture
 
+The application follows a clean, layered architecture to separate concerns:
+
+**Main (CLI) → Service → DAO → Database**
+
+- **Model:** Represents the employee data structure.
+- **DAO (Data Access Object):** Executes SQL queries against the MySQL database.
+- **Service:** Enforces business rules and input validation, then delegates to the DAO.
+- **Main:** Handles the interactive command-line interface and user input/output.
+
+### Docker Compose Architecture
+The Dockerized version runs two isolated containers connected via a dedicated Docker network:
+- **Employee App Container:** Runs the Java application (built via a multi-stage Dockerfile).
+- **MySQL Container:** Runs the MySQL 8.4 database.
+
+---
+
+## 4. Technology Stack
+
+- **Java:** 17
+- **Maven:** Build and dependency management
+- **MySQL:** 8.4
+- **JDBC Driver:** MySQL Connector/J 9.4.0
+- **Testing:** JUnit Jupiter 5.13.4
+- **Containerization:** Docker & Docker Compose
+
+---
+
+## 5. Project Structure
+
+```text
+employee-management-system/
+├── Dockerfile                  ← Multi-stage build for the Java app
+├── docker-compose.yml          ← Orchestrates the App and MySQL containers
+├── .dockerignore               ← Excludes local files from the Docker build
+├── .gitignore                  ← Git ignore rules
+├── pom.xml                     ← Maven dependencies and build configuration
+├── README.md                   ← Project documentation
+├── database/
+│   └── schema.sql              ← DDL for database and table creation
+└── src/
+    ├── main/java/com/srikarthik/employee/
+    │   ├── Main.java           ← CLI entry point
+    │   ├── config/
+    │   │   └── DatabaseConnection.java ← Manages JDBC connection (env vars or properties)
+    │   ├── dao/
+    │   │   └── EmployeeDAO.java
+    │   ├── model/
+    │   │   └── Employee.java
+    │   └── service/
+    │       └── EmployeeService.java
+    └── test/java/com/srikarthik/employee/
+        ├── DatabaseConnectionTest.java
+        ├── EmployeeDAOTest.java
+        └── EmployeeServiceValidationTest.java
 ```
-src/main/java/com/srikarthik/employee/
-├── Main.java                    ← Command-line interface and application entry point
-├── config/
-│   └── DatabaseConnection.java  ← JDBC connection management
-├── dao/
-│   └── EmployeeDAO.java         ← All database operations (CRUD + Search)
-├── model/
-│   └── Employee.java            ← Employee data model / POJO
-└── service/
-    └── EmployeeService.java     ← Business rules, input validation, DAO delegation
-```
-
-### Layer Responsibilities
-
-| Layer | Class | Responsibility |
-|---|---|---|
-| **Model** | `Employee.java` | Represents employee data with getters and setters |
-| **DAO** | `EmployeeDAO.java` | Executes parameterised SQL queries against MySQL |
-| **Service** | `EmployeeService.java` | Validates inputs and coordinates DAO calls |
-| **Config** | `DatabaseConnection.java` | Loads credentials from `application.properties` and returns a `Connection` |
-| **CLI** | `Main.java` | Reads user input, calls the service layer, and displays formatted output |
 
 ---
 
-## Database
+## 6. Local Development Setup (Without Docker)
 
-- **Database name:** `employee_management`
-- **Table:** `employees`
+If you prefer to run the application using your local Java and MySQL installations:
 
-| Column | Type | Constraints |
-|---|---|---|
-| `id` | `INT` | `PRIMARY KEY`, `AUTO_INCREMENT` |
-| `employee_code` | `VARCHAR(20)` | `NOT NULL`, `UNIQUE` |
-| `first_name` | `VARCHAR(50)` | `NOT NULL` |
-| `last_name` | `VARCHAR(50)` | `NOT NULL` |
-| `email` | `VARCHAR(100)` | `NOT NULL`, `UNIQUE` |
-| `phone` | `VARCHAR(20)` | Optional |
-| `department` | `VARCHAR(50)` | `NOT NULL` |
-| `designation` | `VARCHAR(100)` | `NOT NULL` |
-| `salary` | `DECIMAL(10,2)` | `NOT NULL` |
-| `hire_date` | `DATE` | `NOT NULL` |
-| `created_at` | `TIMESTAMP` | Auto-set on insert |
-| `updated_at` | `TIMESTAMP` | Auto-updated on change |
+### Prerequisites
+- JDK 17+
+- Maven 3.6+
+- MySQL 8.0+
 
-The full DDL script is located at [`database/schema.sql`](database/schema.sql).
+### Setup Steps
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/srikarthik-dev/employee-management-system.git
+   cd employee-management-system
+   ```
+2. **Create the Database:**
+   Run the `database/schema.sql` script in your local MySQL instance.
+3. **Configure Connection:**
+   Create `src/main/resources/application.properties` (this file is git-ignored):
+   ```properties
+   db.url=jdbc:mysql://localhost:3306/employee_management
+   db.username=YOUR_MYSQL_USERNAME
+   db.password=YOUR_MYSQL_PASSWORD
+   ```
+4. **Run the Application:**
+   Run `Main.java` from your IDE, or package it with Maven:
+   ```bash
+   mvn clean package
+   java -cp target/employee-management-system-1.0.0.jar com.srikarthik.employee.Main
+   ```
 
 ---
 
-## Setup Instructions
-
----
-
-## Run with Docker 🐳
+## 7. Docker Setup
 
 The simplest way to run the project — no local Java, Maven, or MySQL installation required.
 
 ### Prerequisites
-
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/) (includes Docker Compose)
 
-### 1. Clone the Repository
-
+### Quick Start Workflow
 ```bash
 git clone https://github.com/srikarthik-dev/employee-management-system.git
 cd employee-management-system
-```
-
-### 2. Build and Start
-
-```bash
 docker compose up --build
 ```
 
-This single command will:
-
-1. Build the Java application into a self-contained JAR (multi-stage Docker build)
-2. Pull the MySQL 8.4 image
-3. Start the `employee-mysql` container and wait until it is healthy
-4. Start the `employee-app` container and connect it to MySQL
-
-> **Note:** The first build downloads Maven dependencies and may take a few minutes.
-> Subsequent builds are much faster due to Docker layer caching.
-
-The CLI menu appears in the terminal as soon as MySQL is healthy and the application connects.
-
-### 3. Interact with the Application
-
-The application runs interactively in your terminal. Use the numbered menu to add, view, update, and delete employees.
-
-### 4. Stop Containers (preserves data)
-
-```bash
-docker compose down
-```
-
-### 5. Stop and Remove All Data (full reset)
-
-```bash
-docker compose down -v
-```
-
-> **Warning:** `-v` deletes the `employee_mysql_data` Docker volume.
-> All employee records stored in the Docker database are permanently removed.
-> Your local host MySQL installation is **not affected**.
-
-### 6. View Logs
-
-```bash
-# Follow all container logs
-docker compose logs -f
-
-# Follow only the application container
-docker compose logs -f employee-app
-
-# Follow only the MySQL container
-docker compose logs -f employee-mysql
-```
-
-### 7. Enter the Application Container (optional)
-
-```bash
-docker exec -it employee-app sh
-```
-
-### 8. Enter the MySQL Container (optional)
-
-```bash
-docker exec -it employee-mysql mysql -u emp_user -pemp_docker_pass employee_management
-```
-
-### Docker Architecture
-
-| Component | Image | Port | Notes |
-|---|---|---|---|
-| `employee-mysql` | `mysql:8.4` | `3307` (host) → `3306` (container) | Isolated from your local MySQL on port 3306 |
-| `employee-app` | Built from `Dockerfile` | — | Connects to `employee-mysql:3306` inside Docker network |
-
-> **Security note:** The credentials in `docker-compose.yml` (`emp_user` / `emp_docker_pass`) are
-> Docker-local development values only. They are **not** your personal MySQL password and are safe to
-> commit. Never put your real host MySQL password into any committed file.
+### How it Works
+1. **Network:** Creates an isolated Docker network (`employee-net`).
+2. **MySQL Container:** Starts `employee-mysql` and initializes the database using `database/schema.sql` on the first run.
+3. **Volume:** Uses a persistent named volume (`employee_mysql_data`) so your data survives container restarts.
+4. **Healthcheck:** The `employee-app` container waits until the MySQL container reports a `healthy` status before starting.
+5. **App Container:** The Java application is built into a self-contained JAR using a multi-stage `Dockerfile`. It connects to the database via the internal network (`employee-mysql:3306`).
+6. **Port Mapping:** The Docker MySQL instance is exposed to your host machine on port `3307` to avoid conflicting with any local MySQL running on port `3306`.
 
 ---
 
-## Local Development (without Docker)
+## 8. Docker Commands
 
-### Prerequisites
-
-- JDK 17 or later
-- Apache Maven 3.6+
-- MySQL 8.0+
-
-
----
-
-### 1. Clone the Repository
-
-```bash
-git clone <your-repository-url>
-cd employee-management-system
-```
-
----
-
-### 2. Create the Database
-
-Log in to MySQL and run the schema script:
-
-```bash
-mysql -u root -p < database/schema.sql
-```
-
-Or run the script manually inside the MySQL shell:
-
-```sql
-source /path/to/employee-management-system/database/schema.sql;
-```
-
-This creates the `employee_management` database and the `employees` table if they do not already exist.
+- **Start and Build (Interactive):**
+  ```bash
+  docker compose up --build
+  ```
+- **Start in Background:**
+  ```bash
+  docker compose up -d
+  ```
+- **View Running Containers:**
+  ```bash
+  docker compose ps
+  ```
+- **View Logs:**
+  ```bash
+  docker compose logs -f
+  ```
+- **Stop Containers (preserves data):**
+  ```bash
+  docker compose down
+  ```
+- **Stop and Remove Volumes (Full Reset):**
+  ```bash
+  docker compose down -v
+  ```
+- **Rebuild from Scratch (Ignoring Cache):**
+  ```bash
+  docker compose build --no-cache
+  ```
 
 ---
 
-### 3. Configure the Database Connection
+## 9. Database Persistence
 
-Create the following file (it is listed in `.gitignore` and will **not** be committed):
-
-```
-src/main/resources/application.properties
-```
-
-Add your connection details:
-
-```properties
-db.url=jdbc:mysql://localhost:3306/employee_management
-db.username=root
-db.password=YOUR_MYSQL_PASSWORD
-```
-
-> **Security:** Never commit `application.properties` to version control.
-> It is already excluded via `.gitignore`.
+By default, the MySQL container uses a named Docker volume to store data.
+- Running `docker compose down` will stop the containers, but **preserve** your employee records.
+- Running `docker compose down -v` will **permanently delete** the database volume, causing the database to be initialized fresh (empty) on the next startup.
 
 ---
 
-### 4. Build
+## 10. Configuration & Security
 
-```bash
-mvn clean compile
-```
-
-Expected output: `BUILD SUCCESS`
+- **Environment Variables:** When running in Docker, `DatabaseConnection.java` automatically falls back to reading the `DB_URL`, `DB_USERNAME`, and `DB_PASSWORD` environment variables provided by `docker-compose.yml`.
+- **Git Ignore:** The local `application.properties` file is strictly ignored by Git to prevent accidental commits of local database credentials.
+- **Docker Credentials:** The credentials found in `docker-compose.yml` are Docker-local development values only and are securely isolated within the Docker network.
+- **No Bundled Credentials:** The multi-stage `Dockerfile` explicitly removes any local `application.properties` before packaging the JAR, ensuring host credentials are never bundled into the Docker image.
 
 ---
 
-### 5. Run Tests
+## 11. Testing
 
+The project includes a robust test suite covering database connectivity, DAO operations, and service-layer validation.
+
+To run the automated tests locally:
 ```bash
 mvn clean test
 ```
-
-Expected output:
-
-```
-Tests run: 14, Failures: 0, Errors: 0, Skipped: 0
-BUILD SUCCESS
-```
+The project currently has **14 automated tests**, all of which must pass for a successful build.
 
 ---
 
-### 6. Run the Application
+## 12. Troubleshooting
 
-This project does not include an exec plugin in `pom.xml`.
-The recommended way to run the application is directly from your IDE
-(IntelliJ IDEA, Eclipse, VS Code with Java extensions) by running `Main.java`.
-
-Alternatively, build a JAR with dependencies and run it from the terminal:
-
-```bash
-# Package with dependencies
-mvn package
-
-# Run (adjust the JAR filename if the version changes)
-java -cp target/employee-management-system-1.0.0.jar com.srikarthik.employee.Main
-```
-
-> If the JAR does not bundle dependencies, add them to the classpath explicitly,
-> or run via your IDE which handles this automatically.
+- **Docker not running:** Ensure Docker Desktop is open and the Docker daemon is running before executing `docker compose` commands.
+- **Port conflict:** If port `3307` is already in use on your host machine, modify the `ports` mapping in `docker-compose.yml` (e.g., `"3308:3306"`).
+- **Containers not healthy:** Check the MySQL logs using `docker compose logs employee-mysql` to see why the database failed to initialize.
+- **Stale database volume:** If you modify `schema.sql`, the database won't automatically update if the volume already exists. Run `docker compose down -v` to reset it.
+- **Rebuilding after code changes:** If you change Java code, always use `docker compose up --build` to ensure the application image is recompiled.
 
 ---
 
-## Application Menu
+## 13. Production / Deployment Note
 
-```
-========================================
-       EMPLOYEE MANAGEMENT SYSTEM
-========================================
-
-  1.  Add Employee
-  2.  View Employee
-  3.  View All Employees
-  4.  Search Employee
-  5.  Update Employee
-  6.  Delete Employee
-  7.  Exit
-
-========================================
-  Enter choice:
-```
+The included Docker Compose setup and `Dockerfile` are intended for local development, demonstration, and portfolio deployment. While they demonstrate solid containerization principles (like multi-stage builds and healthchecks), they use development credentials and configuration, and are not intended for a hardened production environment without further security adjustments.
 
 ---
 
-## Validation Rules
-
-All validation is enforced in the **service layer** (`EmployeeService.java`) before any database call is made.
-
-| Field | Rules |
-|---|---|
-| Employee Code | Required · Max 20 characters |
-| First Name | Required · Max 50 characters |
-| Last Name | Required · Max 50 characters |
-| Email | Required · Max 100 characters · Must contain `@` and a `.` after `@` |
-| Phone | Optional · Max 20 characters |
-| Department | Required · Max 50 characters |
-| Designation | Required · Max 100 characters |
-| Salary | Required · Must be zero or greater |
-| Hire Date | Required · Must not be in the future · Format: `YYYY-MM-DD` |
-| Employee ID | Must be a positive integer |
-
-**Duplicate handling:** If an employee code or email already exists in the database, the application displays a clear message instead of a raw SQL error:
-
-```
-Employee code or email already exists.
-```
-
----
-
-## Testing
-
-Tests are located in:
-
-```
-src/test/java/com/srikarthik/employee/
-├── DatabaseConnectionTest.java          ← Verifies MySQL connectivity
-├── EmployeeDAOTest.java                 ← Tests CRUD operations and search
-└── EmployeeServiceValidationTest.java   ← Tests all service-layer validation rules
-```
-
-| Test Class | What it covers |
-|---|---|
-| `DatabaseConnectionTest` | Establishes a live database connection |
-| `EmployeeDAOTest` | Full employee lifecycle: create, read, update, delete, search |
-| `EmployeeServiceValidationTest` | Blank fields, length limits, invalid email, negative salary, future hire date |
-
-**Verified result:**
-
-```
-Tests run: 14, Failures: 0, Errors: 0, Skipped: 0
-BUILD SUCCESS
-```
-
----
-
-## Project Structure
-
-```
-employee-management-system/
-├── database/
-│   └── schema.sql                    ← DDL to create database and table
-├── src/
-│   ├── main/
-│   │   ├── java/
-│   │   │   └── com/srikarthik/employee/
-│   │   │       ├── Main.java
-│   │   │       ├── config/
-│   │   │       │   └── DatabaseConnection.java
-│   │   │       ├── dao/
-│   │   │       │   └── EmployeeDAO.java
-│   │   │       ├── model/
-│   │   │       │   └── Employee.java
-│   │   │       └── service/
-│   │   │           └── EmployeeService.java
-│   │   └── resources/
-│   │       └── application.properties  ← Not committed (see .gitignore)
-│   └── test/
-│       └── java/
-│           └── com/srikarthik/employee/
-│               ├── DatabaseConnectionTest.java
-│               ├── EmployeeDAOTest.java
-│               └── EmployeeServiceValidationTest.java
-├── .gitignore
-├── pom.xml
-└── README.md
-```
-
----
-
-## Security Note
-
-Database credentials are stored locally in `src/main/resources/application.properties`
-and are **never committed to Git**. This file is explicitly listed in `.gitignore`.
-
-Do not hardcode credentials anywhere in the Java source files.
-
----
-
-## Future Enhancements
-
-The following improvements are planned as future work and are **not currently implemented**:
-
-- **Web interface** — a browser-based frontend (e.g. using JSP, Thymeleaf, or React)
-- **REST API** — HTTP endpoints using Spring Boot or Jakarta EE
-- **Authentication** — login system with role-based access control
-- **Pagination** — efficient handling of large employee datasets
-- **Advanced filtering** — multi-field filter and sort options
-- **Reporting / Export** — CSV or PDF export of employee records
-- **Deployment** — cloud hosting with Docker and CI/CD pipeline
-
----
-
-## Author
-
-**Srikarthik K**  
-Java Developer  
-[GitHub](https://github.com/srikarthikk)
-
----
-
-*Built as a college project demonstrating Java, MySQL, JDBC, Maven, and JUnit.*
+*Built by Srikarthik K as a comprehensive project demonstrating Java, MySQL, JDBC, Maven, JUnit, and Docker.*
