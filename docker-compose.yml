@@ -1,0 +1,102 @@
+# =============================================================================
+# docker-compose.yml — Employee Management System
+#
+# DOCKER-LOCAL CREDENTIALS ONLY — these are NOT production or personal values.
+# They apply only inside the isolated Docker network and are never used against
+# your host MySQL installation.
+#
+# Usage:
+#   docker compose up --build        — build and start
+#   docker compose down              — stop and remove containers
+#   docker compose down -v           — stop, remove containers AND the DB volume
+# =============================================================================
+
+services:
+
+  # ---------------------------------------------------------------------------
+  # employee-mysql
+  # MySQL 8.4 server with automatic schema initialisation.
+  # ---------------------------------------------------------------------------
+  employee-mysql:
+    image: mysql:8.4
+    container_name: employee-mysql
+    restart: unless-stopped
+
+    environment:
+      # -----------------------------------------------------------------------
+      # Docker-local credentials — safe to commit; not your host password.
+      # Change these if you prefer, but keep DB_USERNAME / DB_PASSWORD in the
+      # employee-app section in sync.
+      # -----------------------------------------------------------------------
+      MYSQL_ROOT_PASSWORD: docker_root_secret
+      MYSQL_DATABASE: employee_management
+      MYSQL_USER: emp_user
+      MYSQL_PASSWORD: emp_docker_pass
+
+    ports:
+      # Expose MySQL to the host on 3307 to avoid clashing with your local
+      # MySQL instance running on 3306.
+      - "3307:3306"
+
+    volumes:
+      # Named volume: data persists across container restarts.
+      - employee_mysql_data:/var/lib/mysql
+      # Schema initialisation: MySQL runs every *.sql file in this directory
+      # the very first time the volume is created.
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro
+
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost",
+             "-u", "emp_user", "--password=emp_docker_pass"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+    networks:
+      - employee-net
+
+  # ---------------------------------------------------------------------------
+  # employee-app
+  # Java 17 CLI application — built from the project Dockerfile.
+  # Starts only after MySQL reports healthy.
+  # ---------------------------------------------------------------------------
+  employee-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: employee-app
+    restart: "no"
+
+    # Keep stdin open so the interactive CLI menu works.
+    stdin_open: true
+    tty: true
+
+    environment:
+      # The application connects to the Compose service name, NOT localhost.
+      DB_URL: jdbc:mysql://employee-mysql:3306/employee_management?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      DB_USERNAME: emp_user
+      DB_PASSWORD: emp_docker_pass
+
+    depends_on:
+      employee-mysql:
+        condition: service_healthy
+
+    networks:
+      - employee-net
+
+# =============================================================================
+# Named volume — data survives container restarts.
+# Run `docker compose down -v` to intentionally delete all data.
+# =============================================================================
+volumes:
+  employee_mysql_data:
+    name: employee_mysql_data
+
+# =============================================================================
+# Dedicated bridge network — containers are isolated from the host network.
+# =============================================================================
+networks:
+  employee-net:
+    name: employee-net
+    driver: bridge

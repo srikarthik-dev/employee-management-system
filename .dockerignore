@@ -1,0 +1,40 @@
+# Maven build output — never include compiled classes or JARs in the image
+target/
+
+# Local database credentials — must NEVER be bundled inside the Docker image.
+# The Docker container uses DB_URL / DB_USERNAME / DB_PASSWORD env vars instead.
+src/main/resources/application.properties
+
+# Git metadata — not needed inside the container
+.git/
+.gitignore
+
+# IDE-specific directories
+.idea/
+.vscode/
+*.iml
+
+# macOS filesystem noise
+.DS_Store
+**/.DS_Store
+
+# Environment / secrets — never copy into image
+.env
+*.env
+
+# Editor temp / backup files
+*.swp
+*.swo
+*~
+
+# Log files
+logs/
+*.log
+
+# OS temp files
+Thumbs.db
+
+# Docker files themselves (already in build context, but no need to re-copy)
+Dockerfile
+docker-compose.yml
+.dockerignore

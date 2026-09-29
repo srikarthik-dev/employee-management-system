@@ -90,11 +90,107 @@ The full DDL script is located at [`database/schema.sql`](database/schema.sql).
 
 ## Setup Instructions
 
+---
+
+## Run with Docker 🐳
+
+The simplest way to run the project — no local Java, Maven, or MySQL installation required.
+
+### Prerequisites
+
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) (includes Docker Compose)
+
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/srikarthik-dev/employee-management-system.git
+cd employee-management-system
+```
+
+### 2. Build and Start
+
+```bash
+docker compose up --build
+```
+
+This single command will:
+
+1. Build the Java application into a self-contained JAR (multi-stage Docker build)
+2. Pull the MySQL 8.4 image
+3. Start the `employee-mysql` container and wait until it is healthy
+4. Start the `employee-app` container and connect it to MySQL
+
+> **Note:** The first build downloads Maven dependencies and may take a few minutes.
+> Subsequent builds are much faster due to Docker layer caching.
+
+The CLI menu appears in the terminal as soon as MySQL is healthy and the application connects.
+
+### 3. Interact with the Application
+
+The application runs interactively in your terminal. Use the numbered menu to add, view, update, and delete employees.
+
+### 4. Stop Containers (preserves data)
+
+```bash
+docker compose down
+```
+
+### 5. Stop and Remove All Data (full reset)
+
+```bash
+docker compose down -v
+```
+
+> **Warning:** `-v` deletes the `employee_mysql_data` Docker volume.
+> All employee records stored in the Docker database are permanently removed.
+> Your local host MySQL installation is **not affected**.
+
+### 6. View Logs
+
+```bash
+# Follow all container logs
+docker compose logs -f
+
+# Follow only the application container
+docker compose logs -f employee-app
+
+# Follow only the MySQL container
+docker compose logs -f employee-mysql
+```
+
+### 7. Enter the Application Container (optional)
+
+```bash
+docker exec -it employee-app sh
+```
+
+### 8. Enter the MySQL Container (optional)
+
+```bash
+docker exec -it employee-mysql mysql -u emp_user -pemp_docker_pass employee_management
+```
+
+### Docker Architecture
+
+| Component | Image | Port | Notes |
+|---|---|---|---|
+| `employee-mysql` | `mysql:8.4` | `3307` (host) → `3306` (container) | Isolated from your local MySQL on port 3306 |
+| `employee-app` | Built from `Dockerfile` | — | Connects to `employee-mysql:3306` inside Docker network |
+
+> **Security note:** The credentials in `docker-compose.yml` (`emp_user` / `emp_docker_pass`) are
+> Docker-local development values only. They are **not** your personal MySQL password and are safe to
+> commit. Never put your real host MySQL password into any committed file.
+
+---
+
+## Local Development (without Docker)
+
 ### Prerequisites
 
 - JDK 17 or later
 - Apache Maven 3.6+
 - MySQL 8.0+
+
 
 ---
 
